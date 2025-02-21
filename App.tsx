@@ -2,7 +2,7 @@ import React from 'react';
 import { useFonts } from 'expo-font';
 import {ThemeProvider} from 'styled-components';
 import theme from './src/global/styles/theme';
-
+import {MainNoInfoScreen} from './src/screens/MainNoInfoScreen'
 import { 
   Poppins_400Regular,
   Poppins_700Bold,
@@ -35,7 +35,7 @@ export default function App() {
   }
   return (
     <ThemeProvider theme={theme}>
-
+     < MainNoInfoScreen/>
     </ThemeProvider>
   );
 }

@@ -5,7 +5,8 @@ import theme from "../../global/styles/theme";
 
 export const CardContainer = styled.View`
   padding: ${RFValue(8)}px;
-  margin: ${RFValue(30)}px;
+  margin-top: ${RFValue(30)}px;
+  margin-left: ${RFValue(25)}px;
 `;
 
 export const Header = styled.Text`
@@ -16,7 +17,6 @@ export const Header = styled.Text`
 
 export const Card = styled.View`
   margin-top: ${RFValue(15)}px;
-  margin-left: -10px ;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;

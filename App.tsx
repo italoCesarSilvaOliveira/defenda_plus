@@ -1,20 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { useFonts } from 'expo-font';
+import {ThemeProvider} from 'styled-components';
+import theme from './src/global/styles/theme';
+import {MainNoInfoScreen} from './src/screens/MainNoInfoScreen'
+import { 
+  Poppins_400Regular,
+  Poppins_700Bold,
+  Poppins_300Light,
+  Poppins_600SemiBold,
+  Poppins_500Medium  
+} from '@expo-google-fonts/poppins';
 
+import { 
+  Roboto_400Regular,
+  Roboto_700Bold,
+  Roboto_500Medium
+ } from '@expo-google-fonts/roboto';
+
+ 
 export default function App() {
+  let [fontsLoaded] = useFonts({
+    Roboto_400Regular,
+    Roboto_700Bold,
+    Roboto_500Medium,
+    Poppins_400Regular,
+    Poppins_700Bold,
+    Poppins_300Light,
+    Poppins_600SemiBold,
+    Poppins_500Medium
+  })
+
+  if (!fontsLoaded) {
+    return null;
+  }
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <ThemeProvider theme={theme}>
+     < MainNoInfoScreen/>
+    </ThemeProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

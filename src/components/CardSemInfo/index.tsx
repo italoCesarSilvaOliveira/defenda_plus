@@ -9,8 +9,6 @@ import {
   Time,
 } from "./styles";
 
-
-//card para aparecer na Home sem informação
 export const CardSemInfo = () => {
   return (
     <CardContainer>

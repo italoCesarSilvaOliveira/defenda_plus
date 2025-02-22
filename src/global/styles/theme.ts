@@ -8,6 +8,7 @@ export default{
         gray: '#7f8c8d',
         positive: '#4CAF50',
         negative: '#FF0000',
+        backgroundModal: 'rgba(0, 0, 0, 0.5)',
   },
   fonts: {
     r_medium: 'Roboto_500Medium',

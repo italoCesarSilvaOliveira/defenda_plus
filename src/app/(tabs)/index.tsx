@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet} from "react-native";
+import { Header } from "../../components/Header";
 
 export default function HomePage() {
   return (
-    <View style={styles.container}>
-      <Text> Home Page </Text>
+    <View style={{flex: 1, paddingTop: 32}}>
+      <Header />
     </View>
   )
 }

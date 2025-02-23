@@ -7,7 +7,8 @@ export default{
         black: '#000000',
         gray: '#7f8c8d',
         positive: '#4CAF50',
-        negative: '#FF0000',
+        red: '#FF0000',
+        negative: 'rgba(255,128,128, 0.5)',
         backgroundModal: 'rgba(0, 0, 0, 0.5)',
   },
   fonts: {
@@ -21,5 +22,3 @@ export default{
     p_medium:'Poppins_500Medium'
   }
 }
-
-  

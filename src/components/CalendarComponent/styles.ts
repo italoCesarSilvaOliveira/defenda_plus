@@ -5,11 +5,15 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 23,
     paddingHorizontal: 20,
-  },
 
-  elevation: {
+    // Sombra para Android
     elevation: 20,
+
+    // Sombra para iOS
     shadowColor: 'black',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
   },
 
   component: {  

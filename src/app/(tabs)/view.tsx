@@ -1,11 +1,11 @@
 import { View, Text, StyleSheet} from "react-native";
 import { Header } from "../../components/Header";
-import { SemInfo } from "../../screens/SemInfo";
+import { TelaView } from "../../screens/TelaView";
 export default function ViewPage() {
   return (
     <View style={styles.container}>
       <Header />
-      <SemInfo />
+      <TelaView />
       
     </View>
   )

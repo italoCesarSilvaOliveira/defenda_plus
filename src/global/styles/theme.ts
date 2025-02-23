@@ -10,6 +10,7 @@ export default{
         red: '#FF0000',
         negative: 'rgba(255,128,128, 0.5)',
         backgroundModal: 'rgba(0, 0, 0, 0.5)',
+        bottonCancelamento: '#FF3D00',
   },
   fonts: {
     r_medium: 'Roboto_500Medium',

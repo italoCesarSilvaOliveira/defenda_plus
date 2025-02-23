@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Topo } from './styles';
+import { Container } from './styles';
 import { CalendarComponent } from '../../components/CalendarComponent';
 import { CardInfo } from '../../components/CardInfo';
 import { CardConfirm } from '../../components/CardConfirm';
@@ -81,7 +81,6 @@ export function Home() {
 
   return (
     <Container>
-      <Topo />
       <CalendarComponent />
       <ScrollView
         showsVerticalScrollIndicator={false}

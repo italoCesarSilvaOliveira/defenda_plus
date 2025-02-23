@@ -6,8 +6,3 @@ export const Container = styled.View`
   flex: 1;
   background-color: ${theme.colors.white};
 `;
-
-export const Topo = styled.View`  
-  flex: 1;
-  margin-top: ${RFValue(30)}px;
-`;

@@ -5,19 +5,20 @@ import {
   User, 
   Name, 
   ProfileImage, 
-  NotificationButton
 } from "./styles";
 
-export function Header() {
+import { Link } from "expo-router";
+
+export function HeaderComponentNot() {
   return (
     <Container>
       <User>
         <ProfileImage source={{ uri: "https://github.com/italoCesarSilvaOliveira.png" }} />
         <Name>Ítalo César</Name>
       </User>
-      <NotificationButton>
-        <Ionicons name="notifications" size={30} color="blue" />
-      </NotificationButton>
+      <Link href={"/index"}>
+        <Ionicons name="notifications" size={30} color="blue"/>
+      </Link>
     </Container>
   );
 }

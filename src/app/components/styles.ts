@@ -29,4 +29,14 @@ export const Name = styled.Text`
   color:${theme.colors.black} ;
 `;
 
-export const NotificationButton = styled.TouchableOpacity``;
+export const ContainerNot = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+`;
+
+export const NoNotificationText = styled.Text`
+  font-size: 16px;
+  color: #888;
+`

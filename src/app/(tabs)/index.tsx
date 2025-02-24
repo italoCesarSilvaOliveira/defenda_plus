@@ -1,11 +1,11 @@
 import { View, StyleSheet} from "react-native";
-import { Header } from "../../components/Header";
+import { HeaderComponent } from "../components/index";
 import { Home } from "../../screens/Home";
 
 export default function HomePage() {
   return (
     <View style={{flex: 1}}>
-      <Header />
+      <HeaderComponent />
       <Home />
     </View>
   )

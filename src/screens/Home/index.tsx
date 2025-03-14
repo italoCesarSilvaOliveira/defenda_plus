@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from './styles';
 import { CalendarComponent } from '../../components/CalendarComponent';
 import { CardInfo } from '../../components/CardInfo';
 import { CardConfirm } from '../../components/CardConfirm';
-import { CardDay } from '../../components/CardDay'; 
-import { ScrollView } from 'react-native';
-import { cardData } from '../../components/cardData';
+import { CardDay } from '../../components/CardDay';
+import { ScrollView, Text } from 'react-native'; // Certifique-se de importar Text do react-native
+import axios from 'axios';
 
 const NumberMes = (month: string) => {
   const months = {
@@ -25,12 +25,70 @@ const NumberMes = (month: string) => {
   return months[month as keyof typeof months];
 };
 
-export function Home() {
-  const [cards, setCards] = useState(cardData);
-  const [showDialog, setShowDialog] = useState(false);
-  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+const parseTime = (time: string) => {
+  const [hour, minute] = time.split(':').map(Number);
+  const isPM = time.includes('PM');
+  const hours24 = isPM ? (hour % 12) + 12 : hour % 12;
+  return [hours24, minute];
+};
 
-  const toggleStatus = (id: number) => {
+export function Home() {
+  const [cards, setCards] = useState<any[]>([]);
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<number | string | null>(null);
+
+  useEffect(() => {
+    const fetchCalendlyData = async () => {
+      try {
+        const CALENDLY_EVENT_TYPES_URL =
+          "https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/3118a603-1be7-40c2-800a-8f84ac539324&event_type=https://api.calendly.com/event_types/51c787f4-d90c-4d68-92ed-69ea0120e1d8";
+        const CALENDLY_ACCESS_TOKEN =
+          "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzQxOTYwNjE0LCJqdGkiOiI5NDMxZGE0ZS03MDIzLTQ4OGItYjgzNC05MTNkYTg2NjVlODQiLCJ1c2VyX3V1aWQiOiIzMTE4YTYwMy0xYmU3LTQwYzItODAwYS04Zjg0YWM1MzkzMjQifQ.KOZF_sjRgX72RYp2oavtpl-uUkEv9LGnoSxo4d1FS9dXBclSYUeSASZNyEwQTVpkLvlDmjOVu-SY-nZKcGsqqw";
+
+        const response = await axios.get(CALENDLY_EVENT_TYPES_URL, {
+          headers: {
+            Authorization: CALENDLY_ACCESS_TOKEN,
+          },
+        });
+
+        const eventTypes = response.data?.collection;
+        if (!eventTypes) {
+          throw new Error("Nenhum evento encontrado ou erro ao acessar os dados.");
+        }
+
+        const mappedCards = eventTypes.map((event: any) => {
+          const startTime = new Date(event.start_time);
+          const endTime = new Date(event.end_time);
+
+          const day = startTime.getDate();
+          const month = startTime.getMonth();
+          const startTimeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const endTimeFormatted = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          const userName = event.event_memberships[0]?.user_name.split(' ').slice(0, 2).join(' ') || "Professor";
+
+          return {
+            id: event.calendar_event.external_id,
+            nomeDia: startTime.toLocaleString('pt-BR', { weekday: 'long' }) || "Evento",
+            dia: day.toString().padStart(2, '0'),
+            mes: (month + 1).toString().padStart(2, '0'),
+            time: `${startTimeFormatted} - ${endTimeFormatted}`,
+            prof: userName,
+            status: 'bloqueado',
+          };
+        });
+
+        setCards(mappedCards);
+      } catch (error: any) {
+        console.error("Erro ao buscar dados do Calendly: ", error.response ? error.response.data : error.message);
+        alert("Erro ao buscar dados. Veja o console para detalhes.");
+      }
+    };
+
+    fetchCalendlyData();
+  }, []);
+
+  const toggleStatus = (id: string) => {
     const selectedCard = cards.find(card => card.id === id);
     if (selectedCard && selectedCard.status === 'disponivel') {
       setSelectedCardId(id);
@@ -40,12 +98,12 @@ export function Home() {
 
   const handleConfirm = () => {
     if (selectedCardId !== null) {
-      setCards((prevCards) => {
-        return prevCards.map((card) => {
+      setCards(prevCards => {
+        return prevCards.map(card => {
           if (card.id === selectedCardId) {
-            return { ...card, status: "marcado" };
-          } else if (card.status === "disponivel") {
-            return { ...card, status: "bloqueado" };
+            return { ...card, status: 'marcado' };
+          } else if (card.status === 'disponivel') {
+            return { ...card, status: 'bloqueado' };
           }
           return card;
         });
@@ -64,20 +122,21 @@ export function Home() {
 
   // Ordenar os cartões
   const sortedCards = [...cards].sort((a, b) => {
-    const dateA = new Date(2025, NumberMes(a.mes), parseInt(a.dia), parseInt(a.time.split(':')[0]) + (a.time.includes('PM') ? 12 : 0), 0); 
-    const dateB = new Date(2025, NumberMes(b.mes), parseInt(b.dia), parseInt(b.time.split(':')[0]) + (b.time.includes('PM') ? 12 : 0), 0); 
-
+    const [startA, startB] = [a.time, b.time].map(time => parseTime(time.split(' - ')[0]));
+    const dateA = new Date(2025, NumberMes(a.mes) - 1, parseInt(a.dia), startA[0], startA[1]);
+    const dateB = new Date(2025, NumberMes(b.mes) - 1, parseInt(b.dia), startB[0], startB[1]);
     return dateA.getTime() - dateB.getTime();
   });
 
+  // Agrupar os cartões por dia e mês
   const groupedCards = sortedCards.reduce((acc, card) => {
     const key = `${card.dia}-${card.mes}`;
     if (!acc[key]) {
-      acc[key] = { ...card, cards: [] }; 
+      acc[key] = { nomeDia: card.nomeDia, dia: card.dia, mes: card.mes, cards: [] };
     }
     acc[key].cards.push(card);
     return acc;
-  }, {} as Record<string, { nomeDia: string; dia: string; mes: string; cards: typeof cardData }>);
+  }, {} as Record<string, { nomeDia: string; dia: string; mes: string; cards: typeof cards }>);
 
   return (
     <Container>
@@ -86,27 +145,32 @@ export function Home() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
-        {Object.values(groupedCards).map(group => (
-          <React.Fragment key={`${group.dia}-${group.mes}`}>
+        {Object.values(groupedCards).map((group: any, groupIndex: number) => (
+          <React.Fragment key={`group-${groupIndex}`}>
             <CardDay
+              key={`card-day-${group.dia}-${group.mes}`}  
               nomeDia={group.nomeDia}
               dia={group.dia}
               mes={group.mes}
             />
-            {group.cards.map(card => (
-              <CardInfo
-                key={card.id}
-                nomeDia={card.nomeDia}
-                dia={card.dia}
-                mes={card.mes}
-                prof={card.prof}
-                time={card.time}
-                status={card.status}
-                onPress={() => toggleStatus(card.id)}
-              />
-            ))}
+            {group.cards.map((card: any) => {
+
+              return (
+                <CardInfo
+                  key={`card-${card.id}`}  
+                  nomeDia={card.nomeDia}
+                  dia={card.dia}
+                  mes={card.mes}
+                  time={card.time}
+                  status={card.status}
+                  prof={card.prof}
+                  onPress={() => toggleStatus(card.id)}
+                />
+              );
+            })}
           </React.Fragment>
         ))}
+
         <CardConfirm
           visible={showDialog}
           onConfirm={handleConfirm}

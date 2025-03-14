@@ -4,7 +4,8 @@ import { CalendarComponent } from '../../components/CalendarComponent';
 import { CardInfo } from '../../components/CardInfo';
 import { CardConfirm } from '../../components/CardConfirm';
 import { CardDay } from '../../components/CardDay';
-import { ScrollView, Text } from 'react-native'; // Certifique-se de importar Text do react-native
+import { ScrollView } from 'react-native'; 
+import { CALENDLY_EVENT_TYPES_URL, CALENDLY_ACCESS_TOKEN } from '@env';
 import axios from 'axios';
 
 const NumberMes = (month: string) => {
@@ -40,33 +41,33 @@ export function Home() {
   useEffect(() => {
     const fetchCalendlyData = async () => {
       try {
-        const CALENDLY_EVENT_TYPES_URL =
-          "https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/3118a603-1be7-40c2-800a-8f84ac539324&event_type=https://api.calendly.com/event_types/51c787f4-d90c-4d68-92ed-69ea0120e1d8";
-        const CALENDLY_ACCESS_TOKEN =
-          "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzQxOTYwNjE0LCJqdGkiOiI5NDMxZGE0ZS03MDIzLTQ4OGItYjgzNC05MTNkYTg2NjVlODQiLCJ1c2VyX3V1aWQiOiIzMTE4YTYwMy0xYmU3LTQwYzItODAwYS04Zjg0YWM1MzkzMjQifQ.KOZF_sjRgX72RYp2oavtpl-uUkEv9LGnoSxo4d1FS9dXBclSYUeSASZNyEwQTVpkLvlDmjOVu-SY-nZKcGsqqw";
-
+        // Verificando se as variáveis de ambiente estão sendo lidas corretamente
+        console.log("CALENDLY_EVENT_TYPES_URL:", CALENDLY_EVENT_TYPES_URL);
+        console.log("CALENDLY_ACCESS_TOKEN:", CALENDLY_ACCESS_TOKEN);
+    
+        // Usando as variáveis de ambiente
         const response = await axios.get(CALENDLY_EVENT_TYPES_URL, {
           headers: {
-            Authorization: CALENDLY_ACCESS_TOKEN,
+            Authorization: CALENDLY_ACCESS_TOKEN, // Usando o token de acesso da variável de ambiente
           },
         });
-
+    
         const eventTypes = response.data?.collection;
         if (!eventTypes) {
           throw new Error("Nenhum evento encontrado ou erro ao acessar os dados.");
         }
-
+    
         const mappedCards = eventTypes.map((event: any) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
-
+    
           const day = startTime.getDate();
           const month = startTime.getMonth();
           const startTimeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           const endTimeFormatted = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    
           const userName = event.event_memberships[0]?.user_name.split(' ').slice(0, 2).join(' ') || "Professor";
-
+    
           return {
             id: event.calendar_event.external_id,
             nomeDia: startTime.toLocaleString('pt-BR', { weekday: 'long' }) || "Evento",
@@ -77,7 +78,7 @@ export function Home() {
             status: 'bloqueado',
           };
         });
-
+    
         setCards(mappedCards);
       } catch (error: any) {
         console.error("Erro ao buscar dados do Calendly: ", error.response ? error.response.data : error.message);
@@ -86,7 +87,7 @@ export function Home() {
     };
 
     fetchCalendlyData();
-  }, []);
+  }, []); // Não precisa de um segundo useEffect
 
   const toggleStatus = (id: string) => {
     const selectedCard = cards.find(card => card.id === id);

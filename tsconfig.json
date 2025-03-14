@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
-    "typeRoots": ["node_modules/@types", "node_modules"],
+    "typeRoots": ["node_modules/@types", "node_modules", "./env.d.ts"],
     "types": ["react", "react-native", "hoist-non-react-statics"]
   },
   "include": ["src", "styled.d.ts"]

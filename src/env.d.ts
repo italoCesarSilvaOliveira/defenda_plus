@@ -1,5 +1,6 @@
 declare module '@env' {
-    export const CALENDLY_EVENT_TYPES_URL: string;
-    export const CALENDLY_ACCESS_TOKEN: string;
-    export const EVENT_NAME: string;
+    export const EVENT_URL: string;
+    export const TOKEN: string;
+    export const API_BASE: string;
+    export const HORARIO_URl: string;
 }

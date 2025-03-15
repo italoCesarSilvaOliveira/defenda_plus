@@ -10,7 +10,7 @@ import { CardDay } from "../../components/CardDay";
 import { TOKEN, HORARIO_URl, EVENTO} from "@env";
 
 
-console.log(EVENTO)
+
 interface EventCard {
   id: string;
   nomeDia: string;

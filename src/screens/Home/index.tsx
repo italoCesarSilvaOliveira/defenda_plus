@@ -5,7 +5,7 @@ import { CardInfo } from '../../components/CardInfo';
 import { CardConfirm } from '../../components/CardConfirm';
 import { CardDay } from '../../components/CardDay';
 import { ScrollView } from 'react-native'; 
-import { CALENDLY_EVENT_TYPES_URL, CALENDLY_ACCESS_TOKEN } from '@env';
+import { CALENDLY_EVENT_TYPES_URL, CALENDLY_ACCESS_TOKEN, EVENT_NAME } from '@env';
 import axios from 'axios';
 
 const NumberMes = (month: string) => {
@@ -34,7 +34,7 @@ const parseTime = (time: string) => {
 };
 
 export function Home() {
-  const [cards, setCards] = useState<any[]>([]);
+  const [availableCards, setAvailableCards] = useState<any[]>([]); 
   const [showDialog, setShowDialog] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<number | string | null>(null);
 
@@ -52,7 +52,9 @@ export function Home() {
           throw new Error("Nenhum evento encontrado ou erro ao acessar os dados.");
         }
     
-        const mappedCards = eventTypes.map((event: any) => {
+        const filteredEvents = eventTypes.filter((event: any) => event.name.includes(process.env.EVENT_NAME ));
+  
+        const mappedCards = filteredEvents.map((event: any) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
     
@@ -70,11 +72,11 @@ export function Home() {
             mes: (month + 1).toString().padStart(2, '0'),
             time: `${startTimeFormatted} - ${endTimeFormatted}`,
             prof: userName,
-            status: 'bloqueado',
+            status: event.status === 'confirmed' ? 'marcado' : 'disponivel',
           };
         });
     
-        setCards(mappedCards);
+        setAvailableCards(mappedCards); 
       } catch (error: any) {
         console.error("Erro ao buscar dados do Calendly: ", error.response ? error.response.data : error.message);
         alert("Erro ao buscar dados. Veja o console para detalhes.");
@@ -85,7 +87,7 @@ export function Home() {
   }, []); 
 
   const toggleStatus = (id: string) => {
-    const selectedCard = cards.find(card => card.id === id);
+    const selectedCard = availableCards.find(card => card.id === id); 
     if (selectedCard && selectedCard.status === 'disponivel') {
       setSelectedCardId(id);
       setShowDialog(true);
@@ -94,12 +96,12 @@ export function Home() {
 
   const handleConfirm = () => {
     if (selectedCardId !== null) {
-      setCards(prevCards => {
+      setAvailableCards(prevCards => {
         return prevCards.map(card => {
           if (card.id === selectedCardId) {
-            return { ...card, status: 'marcado' };
+            return { ...card, status: 'marcado' }; 
           } else if (card.status === 'disponivel') {
-            return { ...card, status: 'bloqueado' };
+            return { ...card, status: 'bloqueado' }; 
           }
           return card;
         });
@@ -114,10 +116,10 @@ export function Home() {
     setSelectedCardId(null);
   };
 
-  const selectedCard = selectedCardId !== null ? cards.find(card => card.id === selectedCardId) : null;
+  const selectedCard = selectedCardId !== null ? availableCards.find(card => card.id === selectedCardId) : null;
 
   // Ordenar os cartões
-  const sortedCards = [...cards].sort((a, b) => {
+  const sortedCards = [...availableCards].sort((a, b) => {
     const [startA, startB] = [a.time, b.time].map(time => parseTime(time.split(' - ')[0]));
     const dateA = new Date(2025, NumberMes(a.mes) - 1, parseInt(a.dia), startA[0], startA[1]);
     const dateB = new Date(2025, NumberMes(b.mes) - 1, parseInt(b.dia), startB[0], startB[1]);
@@ -132,7 +134,7 @@ export function Home() {
     }
     acc[key].cards.push(card);
     return acc;
-  }, {} as Record<string, { nomeDia: string; dia: string; mes: string; cards: typeof cards }>);
+  }, {} as Record<string, { nomeDia: string; dia: string; mes: string; cards: typeof availableCards }>);
 
   return (
     <Container>
@@ -150,7 +152,6 @@ export function Home() {
               mes={group.mes}
             />
             {group.cards.map((card: any) => {
-
               return (
                 <CardInfo
                   key={`card-${card.id}`}  
@@ -158,7 +159,7 @@ export function Home() {
                   dia={card.dia}
                   mes={card.mes}
                   time={card.time}
-                  status={card.status}
+                  status={card.status}  
                   prof={card.prof}
                   onPress={() => toggleStatus(card.id)}
                 />

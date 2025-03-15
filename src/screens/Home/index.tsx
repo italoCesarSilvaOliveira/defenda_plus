@@ -7,8 +7,10 @@ import { CalendarComponent } from "../../components/CalendarComponent";
 import { CardInfo } from "../../components/CardInfo";
 import { CardConfirm } from "../../components/CardConfirm";
 import { CardDay } from "../../components/CardDay";
-import { TOKEN, HORARIO_URl } from "@env";
+import { TOKEN, HORARIO_URl, EVENTO} from "@env";
 
+
+console.log(EVENTO)
 interface EventCard {
   id: string;
   nomeDia: string;
@@ -90,7 +92,7 @@ export function Home() {
         const eventTypes = response.data?.collection;
         if (!eventTypes) throw new Error("Nenhum evento encontrado.");
 
-        const filteredEvents = eventTypes.filter((event: any) => event.name.includes('TCC-Defenda'));
+        const filteredEvents = eventTypes.filter((event: any) => event.name.includes(EVENTO));
 
         const mappedCards: EventCard[] = filteredEvents.map((event: any) => {
           const startTime = new Date(event.start_time);

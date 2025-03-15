@@ -41,14 +41,9 @@ export function Home() {
   useEffect(() => {
     const fetchCalendlyData = async () => {
       try {
-        // Verificando se as variáveis de ambiente estão sendo lidas corretamente
-        console.log("CALENDLY_EVENT_TYPES_URL:", CALENDLY_EVENT_TYPES_URL);
-        console.log("CALENDLY_ACCESS_TOKEN:", CALENDLY_ACCESS_TOKEN);
-    
-        // Usando as variáveis de ambiente
         const response = await axios.get(CALENDLY_EVENT_TYPES_URL, {
           headers: {
-            Authorization: CALENDLY_ACCESS_TOKEN, // Usando o token de acesso da variável de ambiente
+            Authorization: CALENDLY_ACCESS_TOKEN, 
           },
         });
     
@@ -87,7 +82,7 @@ export function Home() {
     };
 
     fetchCalendlyData();
-  }, []); // Não precisa de um segundo useEffect
+  }, []); 
 
   const toggleStatus = (id: string) => {
     const selectedCard = cards.find(card => card.id === id);

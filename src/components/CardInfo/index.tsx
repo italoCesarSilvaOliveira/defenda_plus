@@ -1,7 +1,7 @@
 import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { CardDay } from "../CardDay";
+
 
 import {
   CardContainer,
@@ -24,9 +24,6 @@ interface Props {
 }
 
 export const CardInfo = ({
-  nomeDia,
-  dia,
-  mes,
   prof,
   time,
   status,

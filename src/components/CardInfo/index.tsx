@@ -1,7 +1,6 @@
 import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { CardDay } from "../CardDay";
 
 import {
   CardContainer,
@@ -12,7 +11,6 @@ import {
   Icon,
 } from "./styles";
 
-
 interface Props {
   nomeDia: string;
   dia: string;
@@ -20,17 +18,16 @@ interface Props {
   prof: string;
   time: string;
   status: "disponivel" | "marcado" | "ocupado" | "bloqueado";
-  onPress: () => void; 
+  onPress: () => void;
+  isDisabled: boolean; 
 }
 
 export const CardInfo = ({
-  nomeDia,
-  dia,
-  mes,
   prof,
   time,
   status,
   onPress,
+  isDisabled, 
 }: Props) => {
 
   const icons: Record<Props["status"], keyof typeof Feather.glyphMap> = {
@@ -41,13 +38,16 @@ export const CardInfo = ({
   };
 
   return (
-    <TouchableOpacity onPress={onPress}> 
+    <TouchableOpacity 
+      onPress={isDisabled ? undefined : onPress} 
+      disabled={isDisabled} 
+    > 
       <CardContainer>
         <Card status={status}>
           <InfoContainer>
             <Prof>{prof}</Prof>
             <Time>{time}</Time>
-          </InfoContainer >
+          </InfoContainer>
           <Icon name={icons[status]} />
         </Card>
       </CardContainer>

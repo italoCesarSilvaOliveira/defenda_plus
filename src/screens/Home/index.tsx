@@ -7,7 +7,7 @@ import { CalendarComponent } from "../../components/CalendarComponent";
 import { CardInfo } from "../../components/CardInfo";
 import { CardConfirm } from "../../components/CardConfirm";
 import { CardDay } from "../../components/CardDay";
-import { TOKEN, HORARIO_URl, USER, EVENTO, API_BASE } from "@env";
+import { TOKEN, HORARIO_URl, EVENT_TCC, USER, EVENTO, API_BASE } from "@env";
 
 interface EventCard {
   id: string;
@@ -134,7 +134,7 @@ export function Home() {
             params: {
               start_time: currentStartDate.toISOString(),
               end_time: currentEndDate.toISOString(),
-              event_type: "https://api.calendly.com/event_types/840af3c7-4471-465a-ae90-94c82ac2427c"
+              event_type: `${EVENT_TCC}`
             },
           });
 
@@ -187,37 +187,38 @@ export function Home() {
   useEffect(() => {
     const fetchCalendlyData = async () => {
       if (!userUrl) return;
-      //${HORARIO_URl}?user=${userUrl}
-  
+
       try {
-        const EVENT_URL = `https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/3118a603-1be7-40c2-800a-8f84ac539324`;
-  
-        const response = await axios.get(EVENT_URL, {
-          headers: { Authorization: `${TOKEN}` },
+
+        const response = await axios.get(`${HORARIO_URl}`, {
+          headers: {
+            Authorization: `${TOKEN}`, 
+          },
+          
+          params: {
+            user: userUrl, 
+            status: 'active',
+          },
         });
-  
-        const eventTypes = response.data?.collection;
-        console.log("eventos ->"+eventTypes)
-        if (!eventTypes) throw new Error("Nenhum evento encontrado.");
-  
-        const activeEvents = eventTypes.filter((event: any) => event.status === "active");
-        console.log("eventos ativos->"+activeEvents)
+
+        const activeEvents = response.data?.collection;;
+        console.log("eventos ativos->" + activeEvents)
         const filteredEvents = activeEvents
           .filter((event: any) => event.name.includes(EVENTO))
           .filter((event: any) => {
             const startTime = new Date(event.start_time);
             const hoje = new Date();
-            // Zera hora/minuto/segundo do "hoje" para comparar só por data
+
             hoje.setHours(0, 0, 0, 0);
             return startTime >= hoje;
           });
-  
+
         const mappedCards: EventCard[] = filteredEvents.map((event: any) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
-  
+
           let status: EventCard["status"] = "ocupado";
-  
+
           return {
             id: event.calendar_event?.external_id || event.uri,
             nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
@@ -229,17 +230,17 @@ export function Home() {
             status,
           };
         });
-  
+
         setAvailableCards(mappedCards);
       } catch (error: any) {
         console.error("Erro ao buscar dados do Calendly:", error.response ? error.response.data : error.message);
         Alert.alert("Erro", "Não foi possível carregar os eventos.");
       }
     };
-  
+
     fetchCalendlyData();
   }, [userUrl]);
-  
+
 
 
 

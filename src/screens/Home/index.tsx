@@ -263,7 +263,13 @@ export function Home() {
     setShowDialog(false);
   };
 
-  const groupedCards: GroupedCards = availableCards.reduce((acc, card) => {
+  const groupedCards: GroupedCards = availableCards
+  .sort((a, b) => {
+    const aTime = new Date(`${a.year}-${a.mes}-${a.dia}T${a.time.split(' - ')[0]}:00`);
+    const bTime = new Date(`${b.year}-${b.mes}-${b.dia}T${b.time.split(' - ')[0]}:00`);
+    return aTime.getTime() - bTime.getTime(); // Ordena por hora
+  })
+  .reduce((acc, card) => {
     const dateKey = `${card.year}-${card.mes}-${card.dia}`;
     if (!acc[dateKey]) {
       acc[dateKey] = {

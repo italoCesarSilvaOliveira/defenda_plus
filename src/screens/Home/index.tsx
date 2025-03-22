@@ -65,6 +65,8 @@ export function Home() {
   const [occupiedTimes, setOccupiedTimes] = useState<Set<string>>(new Set());
   let controle = false;
 
+
+  //obter url de user e id do user
   useEffect(() => {
     const fetchUserId = async () => {
       try {
@@ -180,45 +182,62 @@ export function Home() {
     };
 
     fetchAllAvailableTimes();
-  }, [occupiedTimes]); // Dependendo dos horários ocupados
+  }, [occupiedTimes]); 
 
 
   //lista de ocupados
   useEffect(() => {
     const fetchCalendlyData = async () => {
       if (!userUrl) return;
-
+  
       try {
-
         const response = await axios.get(`${HORARIO_URl}`, {
           headers: {
-            Authorization: `${TOKEN}`, 
+            Authorization: `${TOKEN}`,
           },
-          
           params: {
-            user: userUrl, 
+            user: userUrl,
             status: 'active',
           },
         });
-
-        const activeEvents = response.data?.collection;;
-        console.log("eventos ativos->" + activeEvents)
+  
+        const activeEvents = response.data?.collection;
+        console.log("eventos ativos->", activeEvents);
+  
         const filteredEvents = activeEvents
           .filter((event: any) => event.name.includes(EVENTO))
           .filter((event: any) => {
             const startTime = new Date(event.start_time);
             const hoje = new Date();
-
             hoje.setHours(0, 0, 0, 0);
             return startTime >= hoje;
           });
-
-        const mappedCards: EventCard[] = filteredEvents.map((event: any) => {
+  
+        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
-
-          let status: EventCard["status"] = "ocupado";
-
+  
+          let status: EventCard["status"] = "ocupado";  // Status padrão
+  
+          try {
+            // Verificar convidados do evento
+            const inviteesUrl = `${event.uri}/invitees`;
+            const inviteesResponse = await axios.get(inviteesUrl, {
+              headers: { Authorization: `${TOKEN}` },
+            });
+  
+            const invitees = inviteesResponse.data?.collection || [];
+            const foundInvitee = invitees.find((invitee: any) =>
+              invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim() // Compara nome
+            );
+  
+            if (foundInvitee) {
+              status = "marcado"; // Atualiza o status para "marcado"
+            }
+          } catch (inviteeError) {
+            console.warn(`Erro ao buscar convidados do evento ${event.uri}:`, inviteeError);
+          }
+  
           return {
             id: event.calendar_event?.external_id || event.uri,
             nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
@@ -229,20 +248,17 @@ export function Home() {
             prof: event.event_memberships?.[0]?.user_name?.split(" ").slice(0, 2).join(" ") || "Professor",
             status,
           };
-        });
-
+        }));
+          
         setAvailableCards(mappedCards);
       } catch (error: any) {
         console.error("Erro ao buscar dados do Calendly:", error.response ? error.response.data : error.message);
         Alert.alert("Erro", "Não foi possível carregar os eventos.");
       }
     };
-
+  
     fetchCalendlyData();
   }, [userUrl]);
-
-
-
 
   const toggleStatus = (id: string) => {
     const selectedCard = availableCards.find((card) => card.id === id);

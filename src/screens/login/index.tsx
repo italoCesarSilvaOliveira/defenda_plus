@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Container, Logo, Title, Subtitle, ContainerText, Button, ButtonText, GoogleIcon, AppleIcon } from "./styles";
-import { TOKEN, API_BASE } from '@env';
-
 
 export const Login = ({ onLogin }: { onLogin: () => void }) => {
     const handleLogin = () => {

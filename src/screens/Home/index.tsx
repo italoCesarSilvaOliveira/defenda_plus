@@ -8,6 +8,7 @@ import { CardInfo } from "../../components/CardInfo";
 import { CardConfirm } from "../../components/CardConfirm";
 import { CardDay } from "../../components/CardDay";
 import { TOKEN, HORARIO_URl, EVENT_TCC, USER, EVENTO, API_BASE } from "@env";
+import { getControle,setControle } from "../../controle";
 
 interface EventCard {
   id: string;
@@ -63,22 +64,19 @@ export function Home() {
   const [userUrl, setUserUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [occupiedTimes, setOccupiedTimes] = useState<Set<string>>(new Set());
-  let controle = false;
+  const [controle, setControleState] = useState<boolean>(getControle());
 
-
-  //obter url de user e id do user
+  // Obter a URL e o ID do usuário
   useEffect(() => {
     const fetchUserId = async () => {
       try {
         const storedUserUrl = await AsyncStorage.getItem("calendly_user_url");
-
         if (storedUserUrl) {
           setUserUrl(storedUserUrl);
           const storedUserId = storedUserUrl.split("/").pop();
           setUserId(storedUserId || null);
           return;
         }
-
         const response = await fetch(`${API_BASE}/users/me`, {
           headers: {
             Authorization: `${TOKEN}`,
@@ -109,14 +107,11 @@ export function Home() {
     fetchUserId();
   }, []);
 
-
-
-  // Lista de disponível
+  // lista de eventos disponíveis
   useEffect(() => {
     const fetchAllAvailableTimes = async () => {
       const EVENT_TYPE_URL = "https://api.calendly.com/event_type_available_times";
       const results: any[] = [];
-
       let currentStartDate = new Date();
 
       if (currentStartDate.getSeconds() < 30) {
@@ -136,7 +131,7 @@ export function Home() {
             params: {
               start_time: currentStartDate.toISOString(),
               end_time: currentEndDate.toISOString(),
-              event_type: `${EVENT_TCC}`
+              event_type: `${EVENT_TCC}`,
             },
           });
 
@@ -157,7 +152,8 @@ export function Home() {
           const startTime = new Date(event.start_time);
           const endTime = new Date(startTime);
           endTime.setMinutes(startTime.getMinutes() + 30);
-          console
+
+          const isOccupied = occupiedTimes.has(startTime.toISOString());
           return {
             id: `event-${index}`,
             nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
@@ -166,32 +162,42 @@ export function Home() {
             year: startTime.getFullYear().toString(),
             time: `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
             prof: "Ednei Soares",
-            status: controle ? "bloqueado" : "disponivel", // Se controle for true, o status será "bloqueado"
+            status: controle ? "bloqueado" : "disponivel",
             scheduling_url: event.scheduling_url,
           };
         });
 
+        // Verificar se a atualização realmente mudou
         setAvailableCards((prevCards) => {
-          const newCards = mappedCards.filter((newCard) => !prevCards.some((existingCard) => existingCard.id === newCard.id));
+          const newCards = mappedCards.filter(
+            (newCard) => !prevCards.some((existingCard) => existingCard.id === newCard.id)
+          );
+
+          // Se não houver mudança, evitar a atualização do estado
+          if (newCards.length === 0) {
+            return prevCards;
+          }
+
           return [...prevCards, ...newCards];
         });
       } catch (error: any) {
         console.error("Erro ao buscar horários disponíveis:", error.response ? error.response.data : error.message);
         Alert.alert("Erro", "Não foi possível carregar os horários disponíveis.");
       }
+
     };
 
+
     fetchAllAvailableTimes();
-  }, [occupiedTimes]); 
+  }, [occupiedTimes]);
 
-
-  //lista de ocupados
+  //lista de marcados e ocupados 
   useEffect(() => {
     const fetchCalendlyData = async () => {
       if (!userUrl) return;
-  
+
       try {
-        const response = await axios.get(`${HORARIO_URl}`, {
+        const response = await axios.get(HORARIO_URl, {
           headers: {
             Authorization: `${TOKEN}`,
           },
@@ -200,10 +206,8 @@ export function Home() {
             status: 'active',
           },
         });
-  
+
         const activeEvents = response.data?.collection;
-        console.log("eventos ativos->", activeEvents);
-  
         const filteredEvents = activeEvents
           .filter((event: any) => event.name.includes(EVENTO))
           .filter((event: any) => {
@@ -212,32 +216,36 @@ export function Home() {
             hoje.setHours(0, 0, 0, 0);
             return startTime >= hoje;
           });
-  
-        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any) => {
+
+        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any, index:number) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
-  
-          let status: EventCard["status"] = "ocupado";  // Status padrão
-  
+          let status: EventCard["status"] = "ocupado";
+
           try {
-            // Verificar convidados do evento
             const inviteesUrl = `${event.uri}/invitees`;
             const inviteesResponse = await axios.get(inviteesUrl, {
               headers: { Authorization: `${TOKEN}` },
             });
-  
+
             const invitees = inviteesResponse.data?.collection || [];
             const foundInvitee = invitees.find((invitee: any) =>
-              invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim() // Compara nome
-            );
-  
+              invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim()
+          );
+          console.log(index)
             if (foundInvitee) {
-              status = "marcado"; // Atualiza o status para "marcado"
+              status = "marcado";
+              const eventPosition = index; 
+              console.log(controle)
+              const novoControle = !controle;
+              setControle(novoControle);  
+              console.log(controle)
+              console.log('Posição do evento marcado:', eventPosition);
             }
           } catch (inviteeError) {
             console.warn(`Erro ao buscar convidados do evento ${event.uri}:`, inviteeError);
           }
-  
+
           return {
             id: event.calendar_event?.external_id || event.uri,
             nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
@@ -249,15 +257,19 @@ export function Home() {
             status,
           };
         }));
-          
+
+        // Atualiza os cards diretamente sem verificar mudanças
         setAvailableCards(mappedCards);
+
       } catch (error: any) {
         console.error("Erro ao buscar dados do Calendly:", error.response ? error.response.data : error.message);
         Alert.alert("Erro", "Não foi possível carregar os eventos.");
       }
     };
-  
+
+    // Recarregar os dados toda vez que userUrl mudar
     fetchCalendlyData();
+
   }, [userUrl]);
 
   const toggleStatus = (id: string) => {
@@ -280,25 +292,25 @@ export function Home() {
   };
 
   const groupedCards: GroupedCards = availableCards
-  .sort((a, b) => {
-    const aTime = new Date(`${a.year}-${a.mes}-${a.dia}T${a.time.split(' - ')[0]}:00`);
-    const bTime = new Date(`${b.year}-${b.mes}-${b.dia}T${b.time.split(' - ')[0]}:00`);
-    return aTime.getTime() - bTime.getTime(); // Ordena por hora
-  })
-  .reduce((acc, card) => {
-    const dateKey = `${card.year}-${card.mes}-${card.dia}`;
-    if (!acc[dateKey]) {
-      acc[dateKey] = {
-        nomeDia: card.nomeDia,
-        dia: card.dia,
-        mes: card.mes,
-        year: card.year,
-        cards: [],
-      };
-    }
-    acc[dateKey].cards.push(card);
-    return acc;
-  }, {} as GroupedCards);
+    .sort((a, b) => {
+      const aTime = new Date(`${a.year}-${a.mes}-${a.dia}T${a.time.split(' - ')[0]}:00`);
+      const bTime = new Date(`${b.year}-${b.mes}-${b.dia}T${b.time.split(' - ')[0]}:00`);
+      return aTime.getTime() - bTime.getTime();
+    })
+    .reduce((acc, card) => {
+      const dateKey = `${card.year}-${card.mes}-${card.dia}`;
+      if (!acc[dateKey]) {
+        acc[dateKey] = {
+          nomeDia: card.nomeDia,
+          dia: card.dia,
+          mes: card.mes,
+          year: card.year,
+          cards: [],
+        };
+      }
+      acc[dateKey].cards.push(card);
+      return acc;
+    }, {} as GroupedCards);
 
   return (
     <Container>

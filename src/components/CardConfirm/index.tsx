@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal } from "react-native";
+import { Modal, Linking } from "react-native";
 import { 
   Overlay,
   Container, 
@@ -19,6 +19,7 @@ interface ConfirmationDialogProps {
   dia: string;
   mes: string;
   time: string;
+  schedulingUrl?: string; 
 }
 
 export const CardConfirm: React.FC<ConfirmationDialogProps> = ({
@@ -29,7 +30,17 @@ export const CardConfirm: React.FC<ConfirmationDialogProps> = ({
   dia,
   mes,
   time,
+  schedulingUrl, 
 }) => {
+  
+  const handleConfirm = () => {
+    if (schedulingUrl) {
+      Linking.openURL(schedulingUrl);
+    } else {
+      onConfirm();
+    }
+  };
+
   return (
     <Modal transparent visible={visible} animationType="slide">
       <Overlay>
@@ -42,8 +53,8 @@ export const CardConfirm: React.FC<ConfirmationDialogProps> = ({
             <Description>{dia} {mes}</Description>
             <Description>{time}</Description>
           </ContDescription>
-          <ConfirmButton onPress={onConfirm}>
-            <ButtonConfirm>Confirmar?</ButtonConfirm>
+          <ConfirmButton onPress={handleConfirm}>
+            <ButtonConfirm>Agendar?</ButtonConfirm>
           </ConfirmButton>
         </Container>
       </Overlay>

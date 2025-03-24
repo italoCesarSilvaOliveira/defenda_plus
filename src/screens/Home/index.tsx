@@ -239,12 +239,11 @@ export function Home() {
             console.log(index)
             if (foundInvitee) {
               status = "marcado";
-              const eventPosition = index;
-              console.log(controle)
+              if (controle === false){
+                const eventPosition = index;
               const novoControle = !controle;
               setControle(novoControle);
-              console.log(controle)
-              console.log('Posição do evento marcado:', eventPosition);
+              }
             }
           } catch (inviteeError) {
             console.warn(`Erro ao buscar convidados do evento ${event.uri}:`, inviteeError);

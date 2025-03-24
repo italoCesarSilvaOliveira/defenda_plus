@@ -7,8 +7,8 @@ import { CalendarComponent } from "../../components/CalendarComponent";
 import { CardInfo } from "../../components/CardInfo";
 import { CardConfirm } from "../../components/CardConfirm";
 import { CardDay } from "../../components/CardDay";
-import { TOKEN, HORARIO_URl, EVENT_TCC, USER, EVENTO, API_BASE } from "@env";
-import { getControle,setControle } from "../../controle";
+import { TOKEN, HORARIO_URl, USER, EVENTO, API_BASE, EVENT_URL, PROFESSOR } from "@env";
+import { getControle, setControle } from "../../controle";
 
 interface EventCard {
   id: string;
@@ -65,47 +65,48 @@ export function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [occupiedTimes, setOccupiedTimes] = useState<Set<string>>(new Set());
   const [controle, setControleState] = useState<boolean>(getControle());
+  const [organization, setOrganization] = useState<string | null>(null);
 
   // Obter a URL e o ID do usuário
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const storedUserUrl = await AsyncStorage.getItem("calendly_user_url");
-        if (storedUserUrl) {
-          setUserUrl(storedUserUrl);
-          const storedUserId = storedUserUrl.split("/").pop();
-          setUserId(storedUserId || null);
-          return;
-        }
+        // Buscar sempre novos dados ao mudar o token
         const response = await fetch(`${API_BASE}/users/me`, {
           headers: {
             Authorization: `${TOKEN}`,
             "Content-Type": "application/json",
           },
         });
-
+  
         if (!response.ok) {
           throw new Error(`Erro ao buscar usuário: ${response.statusText}`);
         }
-
+  
         const data = await response.json();
         const userUri = data.resource.uri;
         const extractedUserId = userUri.split("/").pop();
-
+        const organization = data.resource.current_organization;
+  
         if (extractedUserId) {
           setUserId(extractedUserId);
           await AsyncStorage.setItem("calendly_user_url", userUri);
         }
-
+  
+        if (organization) {
+          setOrganization(organization);
+          await AsyncStorage.setItem("calendly_organization", organization);
+        }
+  
         setUserUrl(userUri);
       } catch (error) {
         console.error("Erro ao buscar usuário do Calendly:", error);
         Alert.alert("Erro", "Não foi possível carregar seus dados do Calendly.");
       }
     };
-
+  
     fetchUserId();
-  }, []);
+  }, [TOKEN]);
 
   // lista de eventos disponíveis
   useEffect(() => {
@@ -113,47 +114,55 @@ export function Home() {
       const EVENT_TYPE_URL = "https://api.calendly.com/event_type_available_times";
       const results: any[] = [];
       let currentStartDate = new Date();
-
+  
       if (currentStartDate.getSeconds() < 30) {
         currentStartDate.setSeconds(30);
       } else {
         currentStartDate.setMinutes(currentStartDate.getMinutes() + 1);
         currentStartDate.setSeconds(0);
       }
-
+  
       let currentEndDate = new Date(currentStartDate);
       currentEndDate.setDate(currentEndDate.getDate() + 7);
-
+  
       try {
         while (true) {
+          const evento = await axios.get(EVENT_URL, {
+            headers: { Authorization: `${TOKEN}` },
+            params: { organization },
+          });
+  
+          const eventoUrl = evento.data?.collection?.[0]?.uri || null;
+  
+          if (!eventoUrl) break;
+  
           const response = await axios.get(EVENT_TYPE_URL, {
             headers: { Authorization: `${TOKEN}` },
             params: {
               start_time: currentStartDate.toISOString(),
               end_time: currentEndDate.toISOString(),
-              event_type: `${EVENT_TCC}`,
+              event_type: eventoUrl,
             },
           });
-
+  
           const data = response.data?.collection || [];
-
+  
           if (data.length === 0) {
             break;
           }
-
+  
           results.push(...data);
-
+  
           currentStartDate = new Date(currentEndDate);
           currentEndDate = new Date(currentStartDate);
           currentEndDate.setDate(currentEndDate.getDate() + 7);
         }
-
+  
         const mappedCards: EventCard[] = results.map((event: any, index: number) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(startTime);
           endTime.setMinutes(startTime.getMinutes() + 30);
-
-          const isOccupied = occupiedTimes.has(startTime.toISOString());
+ 
           return {
             id: `event-${index}`,
             nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
@@ -161,35 +170,30 @@ export function Home() {
             mes: (startTime.getMonth() + 1).toString().padStart(2, "0"),
             year: startTime.getFullYear().toString(),
             time: `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-            prof: "Ednei Soares",
+            prof: PROFESSOR, //vem do env por conta do retorno da api não retornar o nome 
             status: controle ? "bloqueado" : "disponivel",
             scheduling_url: event.scheduling_url,
           };
         });
-
-        // Verificar se a atualização realmente mudou
+  
         setAvailableCards((prevCards) => {
           const newCards = mappedCards.filter(
             (newCard) => !prevCards.some((existingCard) => existingCard.id === newCard.id)
           );
-
-          // Se não houver mudança, evitar a atualização do estado
-          if (newCards.length === 0) {
-            return prevCards;
-          }
-
-          return [...prevCards, ...newCards];
+  
+          return newCards.length === 0 ? prevCards : [...prevCards, ...newCards];
         });
       } catch (error: any) {
         console.error("Erro ao buscar horários disponíveis:", error.response ? error.response.data : error.message);
         Alert.alert("Erro", "Não foi possível carregar os horários disponíveis.");
       }
-
     };
+  
+    if (TOKEN && organization) {
+      fetchAllAvailableTimes();
+    }
+  }, [TOKEN, organization, occupiedTimes]);
 
-
-    fetchAllAvailableTimes();
-  }, [occupiedTimes]);
 
   //lista de marcados e ocupados 
   useEffect(() => {
@@ -217,7 +221,7 @@ export function Home() {
             return startTime >= hoje;
           });
 
-        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any, index:number) => {
+        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any, index: number) => {
           const startTime = new Date(event.start_time);
           const endTime = new Date(event.end_time);
           let status: EventCard["status"] = "ocupado";
@@ -231,14 +235,14 @@ export function Home() {
             const invitees = inviteesResponse.data?.collection || [];
             const foundInvitee = invitees.find((invitee: any) =>
               invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim()
-          );
-          console.log(index)
+            );
+            console.log(index)
             if (foundInvitee) {
               status = "marcado";
-              const eventPosition = index; 
+              const eventPosition = index;
               console.log(controle)
               const novoControle = !controle;
-              setControle(novoControle);  
+              setControle(novoControle);
               console.log(controle)
               console.log('Posição do evento marcado:', eventPosition);
             }

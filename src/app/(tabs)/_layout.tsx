@@ -12,15 +12,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Agendamentos',
           headerShown: false,
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color='white' />, 
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="calendar" color='white' />, 
         }}
       />
       <Tabs.Screen
         name="view"
         options={{
-          title: 'View',
+          title: 'Informações',
           headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="info" color='white' />, 
         }}

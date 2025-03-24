@@ -3,6 +3,7 @@ export default{
         selected: '#005BA5',
         primary: '#3498db',
         secondary: '#FFC107',
+        bloqueado: `#DEC974`,
         white: '#ffffff',
         black: '#000000',
         gray: '#7f8c8d',

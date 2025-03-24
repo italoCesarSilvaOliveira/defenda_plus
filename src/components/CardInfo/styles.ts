@@ -25,7 +25,7 @@ export const Card = styled.View<TypeProps>`
     background-color: ${theme.colors.secondary};
   `}
   ${(props: TypeProps) => props.status === 'bloqueado' && css`
-    background-color: ${theme.colors.secondary};
+    background-color: ${theme.colors.bloqueado};
   `}
   ${(props: TypeProps) => props.status === 'ocupado' && css`
     background-color: ${theme.colors.negative};

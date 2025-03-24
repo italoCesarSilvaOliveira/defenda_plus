@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "expo-router";  
 import { Card } from "../../components/CardViewSemInfo";
 import { 
     Container, 
@@ -6,16 +7,24 @@ import {
     CardButton, 
     ButtonText, 
     Title,
-} from './styles'
+} from '../../screens/SemInfoView/styles';
+
+
 
 export const SemInfo = () => {
+  const router = useRouter();
+
+  const handleAgendarPress = () => {
+    router.push("/");
+  };
+
   return (
     <Container>
       <InfoSection>
         <Title>Informações</Title>
-        <Card/>
-        <CardButton>
-            <ButtonText>Agendar Horário?</ButtonText>
+        <Card />
+        <CardButton onPress={handleAgendarPress}>
+          <ButtonText>Agendar Horário?</ButtonText>
         </CardButton>
       </InfoSection>
     </Container>

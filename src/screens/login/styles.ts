@@ -46,7 +46,7 @@ export const Button = styled.TouchableOpacity`
 
 export const ButtonText = styled.Text`
   font-family: ${theme.fonts.r_bold};
-  font-size: ${RFValue(17)}px;
+  font-size: ${RFValue(15)}px;
   color: ${theme.colors.black};
   text-align: center;
   flex: 1;

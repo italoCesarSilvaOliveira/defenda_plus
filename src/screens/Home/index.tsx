@@ -108,6 +108,85 @@ export function Home() {
     fetchUserId();
   }, [TOKEN]);
 
+  //lista de marcados e ocupados 
+  useEffect(() => {
+    const fetchCalendlyData = async () => {
+      if (!userUrl) return;
+
+      try {
+        const response = await axios.get(HORARIO_URl, {
+          headers: {
+            Authorization: `${TOKEN}`,
+          },
+          params: {
+            user: userUrl,
+            status: 'active',
+          },
+        });
+
+        const activeEvents = response.data?.collection;
+        const filteredEvents = activeEvents
+          .filter((event: any) => event.name.includes(EVENTO))
+          .filter((event: any) => {
+            const startTime = new Date(event.start_time);
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            return startTime >= hoje;
+          });
+
+        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any, index: number) => {
+          const startTime = new Date(event.start_time);
+          const endTime = new Date(event.end_time);
+          let status: EventCard["status"] = "ocupado";
+
+          try {
+            const inviteesUrl = `${event.uri}/invitees`;
+            const inviteesResponse = await axios.get(inviteesUrl, {
+              headers: { Authorization: `${TOKEN}` },
+            });
+
+            const invitees = inviteesResponse.data?.collection || [];
+            const foundInvitee = invitees.find((invitee: any) =>
+              invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim()
+            );
+            if (foundInvitee) {
+              status = "marcado";
+              if (controle === false){
+                const eventPosition = index;
+              const novoControle = !controle;
+              setControle(novoControle);
+              }
+            }
+          } catch (inviteeError) {
+            console.warn(`Erro ao buscar convidados do evento ${event.uri}:`, inviteeError);
+          }
+
+          return {
+            id: event.calendar_event?.external_id || event.uri,
+            nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
+            dia: startTime.getDate().toString().padStart(2, "0"),
+            mes: (startTime.getMonth() + 1).toString().padStart(2, "0"),
+            year: startTime.getFullYear().toString(),
+            time: `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+            prof: event.event_memberships?.[0]?.user_name?.split(" ").slice(0, 2).join(" ") || "Professor",
+            status,
+          };
+        }));
+
+        // Atualiza os cards diretamente sem verificar mudanças
+        setAvailableCards(mappedCards);
+
+      } catch (error: any) {
+        console.error("Erro ao buscar dados do Calendly:", error.response ? error.response.data : error.message);
+        Alert.alert("Erro", "Não foi possível carregar os eventos.");
+      }
+    };
+
+    // Recarregar os dados toda vez que userUrl mudar
+    fetchCalendlyData();
+
+  }, [userUrl]);
+
   // lista de eventos disponíveis
   useEffect(() => {
     const fetchAllAvailableTimes = async () => {
@@ -194,86 +273,6 @@ export function Home() {
     }
   }, [TOKEN, organization, occupiedTimes]);
 
-
-  //lista de marcados e ocupados 
-  useEffect(() => {
-    const fetchCalendlyData = async () => {
-      if (!userUrl) return;
-
-      try {
-        const response = await axios.get(HORARIO_URl, {
-          headers: {
-            Authorization: `${TOKEN}`,
-          },
-          params: {
-            user: userUrl,
-            status: 'active',
-          },
-        });
-
-        const activeEvents = response.data?.collection;
-        const filteredEvents = activeEvents
-          .filter((event: any) => event.name.includes(EVENTO))
-          .filter((event: any) => {
-            const startTime = new Date(event.start_time);
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            return startTime >= hoje;
-          });
-
-        const mappedCards: EventCard[] = await Promise.all(filteredEvents.map(async (event: any, index: number) => {
-          const startTime = new Date(event.start_time);
-          const endTime = new Date(event.end_time);
-          let status: EventCard["status"] = "ocupado";
-
-          try {
-            const inviteesUrl = `${event.uri}/invitees`;
-            const inviteesResponse = await axios.get(inviteesUrl, {
-              headers: { Authorization: `${TOKEN}` },
-            });
-
-            const invitees = inviteesResponse.data?.collection || [];
-            const foundInvitee = invitees.find((invitee: any) =>
-              invitee?.name?.toUpperCase()?.trim() === USER?.toUpperCase()?.trim()
-            );
-            console.log(index)
-            if (foundInvitee) {
-              status = "marcado";
-              if (controle === false){
-                const eventPosition = index;
-              const novoControle = !controle;
-              setControle(novoControle);
-              }
-            }
-          } catch (inviteeError) {
-            console.warn(`Erro ao buscar convidados do evento ${event.uri}:`, inviteeError);
-          }
-
-          return {
-            id: event.calendar_event?.external_id || event.uri,
-            nomeDia: startTime.toLocaleString("pt-BR", { weekday: "long" }) || "Evento",
-            dia: startTime.getDate().toString().padStart(2, "0"),
-            mes: (startTime.getMonth() + 1).toString().padStart(2, "0"),
-            year: startTime.getFullYear().toString(),
-            time: `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-            prof: event.event_memberships?.[0]?.user_name?.split(" ").slice(0, 2).join(" ") || "Professor",
-            status,
-          };
-        }));
-
-        // Atualiza os cards diretamente sem verificar mudanças
-        setAvailableCards(mappedCards);
-
-      } catch (error: any) {
-        console.error("Erro ao buscar dados do Calendly:", error.response ? error.response.data : error.message);
-        Alert.alert("Erro", "Não foi possível carregar os eventos.");
-      }
-    };
-
-    // Recarregar os dados toda vez que userUrl mudar
-    fetchCalendlyData();
-
-  }, [userUrl]);
 
   const toggleStatus = (id: string) => {
     const selectedCard = availableCards.find((card) => card.id === id);

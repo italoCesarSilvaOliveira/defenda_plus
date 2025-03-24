@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Container, Logo, Title, Subtitle, ContainerText, Button, ButtonText, GoogleIcon, AppleIcon } from "./styles";
 
 export const Login = ({ onLogin }: { onLogin: () => void }) => {
@@ -15,11 +15,11 @@ export const Login = ({ onLogin }: { onLogin: () => void }) => {
       </ContainerText>
       <Button onPress={handleLogin}>
         <GoogleIcon source={require("../../../assets/google.png")} />
-        <ButtonText>Sign in with Google</ButtonText>
+        <ButtonText>Faça login com a Google</ButtonText>
       </Button>
       <Button onPress={handleLogin}>
         <AppleIcon source={require("../../../assets/apple.png")} />
-        <ButtonText>Sign in with Apple</ButtonText>
+        <ButtonText>Faça login com a Apple</ButtonText>
       </Button>
     </Container>
   );

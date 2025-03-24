@@ -107,7 +107,6 @@ export const TelaView = () => {
               status = "marcado";
               eventoMarcado = event;
               posicaoEventoMarcado = i;
-              console.log('Evento marcado encontrado na posição:', i);
               break;
             }
 

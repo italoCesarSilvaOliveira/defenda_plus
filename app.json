@@ -14,9 +14,11 @@
       "backgroundColor": "#005BA5"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.italocesar.defendaplus"
     },
     "android": {
+      "package": "com.italocesar.defendaplus",
       "adaptiveIcon": {
         "foregroundImage": "assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
